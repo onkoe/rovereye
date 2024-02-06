@@ -9,7 +9,7 @@ use opencv::{
     dnn::DNN_BACKEND_OPENCV,
     dnn::DNN_TARGET_CPU,
     imgcodecs::imread,
-    imgproc::LINE_4,
+    imgproc::{LINE_4, LINE_8},
 };
 
 #[rustfmt::skip] // keep this monstrosity outta my eyes
@@ -20,8 +20,8 @@ fn main() -> anyhow::Result<()> {
     let subscriber = tracing_subscriber::FmtSubscriber::new();
     tracing::subscriber::set_global_default(subscriber)?;
 
-    // get config file
-    let conf = current_dir()?.to_string_lossy().to_string() + "/config.toml";
+    // get config file (./config.ini; i dont know what this does lmao)
+    let conf = current_dir()?.to_string_lossy().to_string() + "/config.ini";
 
     // set expected img size (width x height)
     let net_size = (640, 640);
@@ -49,7 +49,20 @@ fn main() -> anyhow::Result<()> {
             LINE_4,
             0,
         )?;
-        tracing::trace!("bounding box #{i}...");
+
+        opencv::imgproc::put_text(
+            &mut frame,
+            CLASSES_LABELS[class_ids[i]],
+            opencv::core::Point::new(bbox.x, bbox.y - 5),
+            1,
+            1.8,
+            Scalar::from((0.0, 255.0, 0.0)),
+            2,
+            LINE_8,
+            false,
+        )?;
+
+        tracing::debug!("bounding box #{i}...");
 
         tracing::debug!("Class: {}", CLASSES_LABELS[class_ids[i]]);
         tracing::debug!("\tBounding box: {:?}", bbox);
