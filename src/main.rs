@@ -4,13 +4,14 @@ use od_opencv::{
     model_format::ModelFormat,
     model_ultralytics::ModelUltralyticsV8, // YOLOv8 by Ultralytics.
 };
+
 use opencv::{
     core::{Scalar, Vector},
-    dnn::DNN_BACKEND_OPENCV,
-    dnn::DNN_TARGET_CPU,
+    dnn::{DNN_BACKEND_OPENCV, DNN_TARGET_CPU},
     imgcodecs::imread,
     imgproc::{LINE_4, LINE_8},
 };
+use tracing::Level;
 
 #[rustfmt::skip] // keep this monstrosity outta my eyes
 const CLASSES_LABELS: [&str; 80] = ["person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck", "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard", "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple", "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "sofa", "pottedplant", "bed", "diningtable", "toilet", "tvmonitor", "laptop", "mouse", "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"];
@@ -40,8 +41,10 @@ fn main() -> anyhow::Result<()> {
     )?;
 
     // feed it an example image
+    let mut frame = imread("images/flowers.png", 1)?;
 
-    let (bboxes, class_ids, confidences) = model.forward(&frame, 0.25, 0.4).unwrap();
+    let (bboxes, class_ids, confidences) = model.forward(&frame, 0.25, 0.4)?;
+
     for (i, bbox) in bboxes.iter().enumerate() {
         opencv::imgproc::rectangle(
             &mut frame,
@@ -67,8 +70,8 @@ fn main() -> anyhow::Result<()> {
         tracing::debug!("bounding box #{i}...");
 
         tracing::debug!("Class: {}", CLASSES_LABELS[class_ids[i]]);
-        tracing::debug!("\tBounding box: {:?}", bbox);
-        tracing::debug!("\tConfidences: {}", confidences[i]);
+        tracing::debug!("Bounding box: {:?}", bbox);
+        tracing::debug!("Confidences: {}", confidences[i]);
     }
 
     // write the bounding boxes
