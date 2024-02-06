@@ -17,7 +17,9 @@ const CLASSES_LABELS: [&str; 80] = ["person", "bicycle", "car", "motorbike", "ae
 
 fn main() -> anyhow::Result<()> {
     // enable logging
-    let subscriber = tracing_subscriber::FmtSubscriber::new();
+    let subscriber = tracing_subscriber::fmt()
+        .with_max_level(Level::DEBUG)
+        .finish();
     tracing::subscriber::set_global_default(subscriber)?;
 
     // get config file (./config.ini; i dont know what this does lmao)
