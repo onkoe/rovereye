@@ -38,7 +38,6 @@ fn main() -> anyhow::Result<()> {
     )?;
 
     // feed it an example image
-    let mut frame = imread("images/dog.jpg", 1)?;
 
     let (bboxes, class_ids, confidences) = model.forward(&frame, 0.25, 0.4).unwrap();
     for (i, bbox) in bboxes.iter().enumerate() {
@@ -58,7 +57,7 @@ fn main() -> anyhow::Result<()> {
     }
 
     // write the bounding boxes
-    opencv::imgcodecs::imwrite("images/dog_yolov8_n.jpg", &frame, &Vector::new())?;
+    opencv::imgcodecs::imwrite("images/flowers_yolov8_n.jpg", &frame, &Vector::new())?;
 
     Ok(())
 }
