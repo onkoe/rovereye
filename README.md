@@ -19,7 +19,7 @@ Please consider using Linux if possible - macOS has a lot of trouble linking, bo
 A VM will suffice if you don't mind some waiting. 😄
 
 - Debian/Ubuntu/etc.: `sudo apt update && sudo apt upgrade -y && sudo apt install -y build-essential cmake opencv-contrib libopencv-contrib-dev libgtk2.0-dev pkg-config libboost-all-dev ffmpeg libonnx-dev libonnx1 python3`
-- Fedora/RHEL/etc.: `sudo dnf update -y && sudo dnf groupinstall "Development Tools" -y && sudo dnf install -y opencv-contrib opencv-devel boost-devel ffmpeg onnxruntime onnx-devel onnxruntime-devel python3`
+- Fedora/RHEL/etc.: `sudo dnf update -y && sudo dnf groupinstall "Development Tools" -y && sudo dnf install -y opencv-contrib opencv-devel boost-devel ffmpeg onnxruntime onnx-devel onnxruntime-devel python3 protobuf-devel`
 - Others: grab C/C++ development tools, `boost`, OpenCV, Onnx Runtime, `ffmpeg`, and a relatively modern version of Python (~3.10)
 
 ### macOS
@@ -35,3 +35,9 @@ If you get an error complaining about OpenCV not having `protobuf` support compi
 TODO???
 
 There are numerous compatibility issues, so I suggest running a VM through VirtualBox or WSL.
+
+### Model
+
+When you download a model to train off of, make sure you convert it to ONNX using [the incredible script](https://crates.io/crates/od_opencv#user-content-prerequisites) that the Rust guy made.
+
+Create a virtual environment and download the dependencies (`ultralytics` `onnx`). Then, you can convert it correctly!
