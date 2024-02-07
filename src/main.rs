@@ -70,11 +70,11 @@ fn main() -> anyhow::Result<()> {
             false,
         )?;
 
-        tracing::debug!("bounding box #{i}...");
-
-        tracing::debug!("Class: {}", CLASSES_LABELS[class_ids[i]]);
-        tracing::debug!("Bounding box: {:?}", bbox);
-        tracing::debug!("Confidences: {}", confidences[i]);
+        tracing::debug!(
+            "[Classification #{i}] Found `{}` (confidence: {confidence}).",
+            CLASSES_LABELS[class_ids[i]]
+        );
+        tracing::trace!("Bounding box: {:?}", bbox);
     }
 
     // write the bounding boxes
