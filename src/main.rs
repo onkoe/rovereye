@@ -1,15 +1,16 @@
 use std::env::current_dir;
 
+use anyhow::Context;
 use od_opencv::{
     model_format::ModelFormat,
     model_ultralytics::ModelUltralyticsV8, // YOLOv8 by Ultralytics.
 };
 
 use opencv::{
-    core::{Scalar, Vector},
+    core::{Rect_, Scalar, Vector},
     dnn::{DNN_BACKEND_OPENCV, DNN_TARGET_CPU},
     imgcodecs::imread,
-    imgproc::{LINE_4, LINE_8},
+    imgproc::LINE_4,
 };
 use tracing::Level;
 
@@ -49,6 +50,7 @@ fn main() -> anyhow::Result<()> {
     let (bboxes, class_ids, confidences) = model.forward(&frame, 0.25, 0.4)?;
 
     for (i, bbox) in bboxes.iter().enumerate() {
+        // create bounding box
         opencv::imgproc::rectangle(
             &mut frame,
             *bbox,
@@ -58,15 +60,49 @@ fn main() -> anyhow::Result<()> {
             0,
         )?;
 
+        // place background behind text + confidence box
+        let size = opencv::imgproc::get_text_size(CLASSES_LABELS[class_ids[i]], 2, 1.0, 1, &mut 0)?;
+        opencv::imgproc::rectangle(
+            &mut frame,
+            Rect_::new(
+                bbox.x,
+                bbox.y - size.height - 5,
+                size.width,
+                size.height + 5,
+            ),
+            Scalar::from((0.0, 255.0, 0.0)),
+            -1, // fill the background
+            LINE_4,
+            0,
+        )?;
+
+        // place classification text on background
         opencv::imgproc::put_text(
             &mut frame,
             CLASSES_LABELS[class_ids[i]],
             opencv::core::Point::new(bbox.x, bbox.y - 5),
+            2,
+            1.0,
+            Scalar::from((0.0, 0.0, 0.0)),
             1,
-            1.8,
+            0,
+            false,
+        )?;
+
+        // confidence text
+        let confidence = format!(
+            "{:.2}%",
+            confidences.get(i).context("guesses have confidence")? * 100_f32
+        );
+        opencv::imgproc::put_text(
+            &mut frame,
+            &confidence,
+            opencv::core::Point::new(bbox.x + 2, bbox.y + 18),
+            1,
+            1.0,
             Scalar::from((0.0, 255.0, 0.0)),
             2,
-            LINE_8,
+            0,
             false,
         )?;
 
