@@ -20,7 +20,7 @@ A VM will suffice if you don't mind some waiting. 😄
 
 - Debian/Ubuntu/etc.: `sudo apt update && sudo apt upgrade -y && sudo apt install -y build-essential cmake opencv-contrib libopencv-contrib-dev libgtk2.0-dev pkg-config libboost-all-dev ffmpeg libonnx-dev libonnx1 python3`
 - Fedora/RHEL/etc.: `sudo dnf update -y && sudo dnf groupinstall "Development Tools" -y && sudo dnf install -y opencv-contrib opencv-devel boost-devel ffmpeg onnxruntime onnx-devel onnxruntime-devel python3 protobuf-devel`
-- Others: grab C/C++ development tools, `boost`, OpenCV, Onnx Runtime, `ffmpeg`, and a relatively modern version of Python (~3.10)
+- Others: grab C/C++ development tools, `boost`, OpenCV, `protobuf`, Onnx Runtime, `ffmpeg`, and a relatively modern version of Python (~3.10)
 
 ### macOS
 
