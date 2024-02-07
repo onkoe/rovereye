@@ -1,0 +1,23 @@
+[project]
+name = "training"
+version = "0.1.0"
+description = "A tiny training/export tool for our YOLOv8 model"
+authors = [{ name = "barrett", email = "contact@barretts.club" }]
+dependencies = [
+    "onnx>=1.15.0",
+    "opencv-python>=4.9.0.80",
+    "ultralytics>=8.1.10",
+]
+readme = "README.md"
+requires-python = ">= 3.8"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = ["mypy>=1.8.0", "ruff>=0.2.1"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
