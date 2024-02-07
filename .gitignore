@@ -1,3 +1,6 @@
 **/.venv
 **/target
 **/runs
+**/*.onnx
+**/*.pt
+Cargo.lock
