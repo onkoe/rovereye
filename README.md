@@ -4,6 +4,8 @@ A first attempt at a custom YOLOv8.
 
 It's Rust because I can't stand troubleshooting Python exceptions. We'll convert it later (unless...? 😳)
 
+<img src="images/flowers_yolov8_n.jpg" height="320" alt="A sample output image of YOLOv8 with bounding box, classification, and confidence"></img>
+
 ## Setup
 
 First, you'll need Rust. Follow the instructions [on this site](https://rustup.rs/) - it'll only take a minute or so to get everything running!
@@ -17,6 +19,8 @@ Now, let's focus on platform-specific setup for OpenCV and YOLO...
 Please consider using Linux if possible - macOS has a lot of trouble linking, both with static and dynamic linking. On the other hand, Windows isn't widely supported in terms of acceleration or even general usage.
 
 A VM will suffice if you don't mind some waiting. 😄
+
+Anyway, run one of these commands on your machine according to its distribution:
 
 - Debian/Ubuntu/etc.: `sudo apt update && sudo apt upgrade -y && sudo apt install -y build-essential cmake opencv-contrib libopencv-contrib-dev libgtk2.0-dev pkg-config libboost-all-dev ffmpeg libonnx-dev libonnx1 python3`
 - Fedora/RHEL/etc.: `sudo dnf update -y && sudo dnf groupinstall "Development Tools" -y && sudo dnf install -y opencv-contrib opencv-devel boost-devel ffmpeg onnxruntime onnx-devel onnxruntime-devel python3 protobuf-devel`
