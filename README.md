@@ -30,9 +30,23 @@ Anyway, run one of these commands on your machine according to its distribution:
 
 You'll likely need to manipulate your environment variables to include a modern Clang++ version from `brew`. As such, your linker will get mad, and you'll have to fix it, too. Please try to use Linux if possible.
 
-- If Linux isn't feasible: `brew install onnxruntime opencv ffmpeg python3 gtk4 gdk-pixbuf protobuf`
+- If Linux isn't feasible: `brew install onnxruntime ffmpeg python3 gtk4 gdk-pixbuf protobuf`
 
-If you get an error complaining about OpenCV not having `protobuf` support compiled in, then the gem still isn't updated, and you'll need to compile OpenCV from source. (this happened in Python, too 😖)
+#### Compiling OpenCV with Protobuf
+
+If you get an error complaining about OpenCV not having `protobuf` support compiled in, then you're using the Homebrew version.
+
+You need to compile it yourself. Here are some instructions...
+
+1. Head to a place you don't care about and `git clone https://github.com/opencv/opencv`
+1. You'll also want to grab the `opencv_contrib` set of modules: `git clone https://github.com/opencv/opencv_contrib`
+1. `cd opencv`
+1. `mkdir build`
+1. `cd build`
+1. Run this giant command: `cmake -DCMAKE_CXX_STANDARD=11 -DCMAKE_OSX_DEPLOYMENT_TARGET= -DBUILD_JASPER=OFF -DBUILD_JPEG=OFF -DBUILD_OPENEXR=OFF -DBUILD_OPENJPEG=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_PNG=OFF -DBUILD_PROTOBUF=ON -DBUILD_TBB=OFF -DBUILD_TESTS=OFF -DBUILD_TIFF=OFF -DBUILD_WEBP=OFF -DBUILD_ZLIB=OFF -DBUILD_opencv_hdf=OFF -DBUILD_opencv_java=OFF -DBUILD_opencv_text=ON -DOPENCV_ENABLE_NONFREE=ON -DOPENCV_EXTRA_MODULES_PATH="../../opencv_contrib/modules" -DOPENCV_GENERATE_PKGCONFIG=ON -DPROTOBUF_UPDATE_FILES=ON -DWITH_1394=OFF -DWITH_CUDA=OFF -DWITH_EIGEN=ON -DWITH_FFMPEG=ON -DWITH_GPHOTO2=OFF -DWITH_GSTREAMER=OFF -DWITH_JASPER=OFF -DWITH_OPENEXR=ON -DWITH_OPENGL=OFF -DWITH_OPENVINO=ON-DWITH_QT=OFF -DWITH_TBB=ON-DWITH_VTK=ON -DBUILD_opencv_python2=OFF -DBUILD_opencv_python3=ON -DPYTHON3_EXECUTABLE="/opt/homebrew/bin/python3" -DCMAKE_BUILD_TYPE=Release ../`
+1. Start compiling with `make -j7`.
+1. Install it to your system with `make -j7 install`.
+1. Run `opencv_version` and make sure it says `4.(something)-dev` in response!
 
 ### Windows
 
