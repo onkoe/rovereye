@@ -45,12 +45,20 @@ fn main() -> anyhow::Result<()> {
         .with_file(true)
         .with_line_number(true)
         .compact()
-        .with_max_level(Level::DEBUG)
+        .with_max_level(args.logging_level)
         .finish();
+
     tracing::subscriber::set_global_default(subscriber)?;
 
-    // get config file (./config.ini; i dont know what this does lmao)
-    let conf = current_dir()?.to_string_lossy().to_string() + "/config.ini";
+    // parse input + output files
+    let output_filename = Path::new(&args.input)
+        .file_stem()
+        .context("input files should have names")?
+        .to_str()
+        .context("input files should have valid UTF-8 characters")?;
+
+    let input_file: String = args.input.to_owned();
+    let output_file = format!("{0}/{output_filename}_{MODEL_NAME}.jpg", args.output);
 
     // set expected img size (width x height)
     let net_size = (640, 640);
