@@ -1,6 +1,9 @@
 from ultralytics import YOLO
 
-model = YOLO("../../../pretrained/yolov8n.pt")
+best = YOLO("../../../pretrained/best.pt")  # the 'best' model according to val
+last = YOLO("../../../pretrained/last.pt")  # the final iteration in training
+
 
 # export to ONNX format for use with OpenCV
-model.export(format="onnx", opset=12)
+best.export(format="onnx", opset=12)
+last.export(format="onnx", opset=12)
