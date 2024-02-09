@@ -8,7 +8,7 @@ use od_opencv::{
 };
 
 use opencv::{
-    core::{Rect_, Scalar, Vector},
+    core::{Mat, Rect_, Scalar, Vector},
     dnn::{DNN_BACKEND_OPENCV, DNN_TARGET_CPU},
     imgcodecs::imread,
     imgproc::LINE_4,
@@ -79,13 +79,22 @@ fn main() -> anyhow::Result<()> {
     let mut frame = imread(&input_file, 1)?;
     draw_bounding_boxes(&mut model, &mut frame)?;
 
-    let (bboxes, class_ids, confidences) = model.forward(&frame, 0.25, 0.4)?;
+    // write the bounding boxes
     opencv::imgcodecs::imwrite(&output_file, &frame, &Vector::new())?;
+    Ok(())
+}
 
+/// Given the the model and frame, utilizes the model's insights to create
+/// bounding boxes around located objects.
+fn draw_bounding_boxes(model: &mut ModelUltralyticsV8, frame: &mut Mat) -> anyhow::Result<()> {
+    // use the model on the image
+    let (bboxes, class_ids, confidences) = model.forward(frame, 0.25, 0.4)?;
+
+    // draw the boxes!
     for (i, bbox) in bboxes.iter().enumerate() {
-        // create bounding box
+        // create the bounding box
         opencv::imgproc::rectangle(
-            &mut frame,
+            frame,
             *bbox,
             Scalar::from((0.0, 255.0, 0.0)), //
             2,
@@ -96,7 +105,7 @@ fn main() -> anyhow::Result<()> {
         // place background behind text + confidence box
         let size = opencv::imgproc::get_text_size(CLASSES_LABELS[class_ids[i]], 2, 1.0, 1, &mut 0)?;
         opencv::imgproc::rectangle(
-            &mut frame,
+            frame,
             Rect_::new(
                 bbox.x,
                 bbox.y - size.height - 5,
@@ -111,7 +120,7 @@ fn main() -> anyhow::Result<()> {
 
         // place classification text on background
         opencv::imgproc::put_text(
-            &mut frame,
+            frame,
             CLASSES_LABELS[class_ids[i]],
             opencv::core::Point::new(bbox.x, bbox.y - 5),
             2,
@@ -128,7 +137,7 @@ fn main() -> anyhow::Result<()> {
             confidences.get(i).context("guesses have confidence")? * 100_f32
         );
         opencv::imgproc::put_text(
-            &mut frame,
+            frame,
             &confidence,
             opencv::core::Point::new(bbox.x + 2, bbox.y + 18),
             1,
@@ -143,7 +152,7 @@ fn main() -> anyhow::Result<()> {
             "[Classification #{i}] Found `{}` (confidence: {confidence}).",
             CLASSES_LABELS[class_ids[i]]
         );
-        tracing::trace!("Bounding box: {:?}", bbox);
+        tracing::trace!("Bounding box #{i} position: {:?}", bbox);
     }
     Ok(())
 }
