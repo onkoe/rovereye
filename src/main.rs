@@ -12,7 +12,10 @@ use opencv::{
     core::Vector,
     dnn::{DNN_BACKEND_OPENCV, DNN_TARGET_CPU},
     imgcodecs::imread,
-    videoio::{VideoCaptureTraitConst, CAP_ANY},
+    videoio::{
+        VideoCaptureTrait, VideoCaptureTraitConst, CAP_ANY, CAP_PROP_FRAME_HEIGHT,
+        CAP_PROP_FRAME_WIDTH,
+    },
 };
 
 mod bb;
@@ -93,6 +96,9 @@ fn main() -> anyhow::Result<()> {
                 tracing::info!("Attempting to use capture device!");
 
                 let mut cam = opencv::videoio::VideoCapture::from_file(&input, CAP_ANY)?;
+                cam.set(CAP_PROP_FRAME_WIDTH, 640.0)?;
+                cam.set(CAP_PROP_FRAME_HEIGHT, 640.0)?;
+
                 sleep(Duration::from_millis(500));
                 tracing::info!("Capture device found!");
 
@@ -102,7 +108,7 @@ fn main() -> anyhow::Result<()> {
                 }
 
                 // head to the stream module
-                stream::stream(&mut cam)?;
+                stream::stream(&mut cam, &mut model)?;
                 return Ok(());
             }
             false => {
