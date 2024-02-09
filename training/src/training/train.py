@@ -1,7 +1,7 @@
 from ultralytics import YOLO
 
 # import pretrained model
-model = YOLO("../../../pretrained/yolov8n.pt")
+model = YOLO("../../../pretrained/yolov8m.pt")
 
 # train the model
 # to insert our own data, replace "coco128.yaml" with "().yaml"
