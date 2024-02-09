@@ -1,7 +1,7 @@
 use std::{env::current_dir, path::Path};
 
 use anyhow::Context;
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use od_opencv::{
     model_format::ModelFormat,
     model_ultralytics::ModelUltralyticsV8, // YOLOv8 by Ultralytics.
@@ -18,6 +18,7 @@ use opencv::{
 const CLASSES_LABELS: [&str; 1] = ["orange mallet"];
 const MODEL_NAME: &str = "yolov8_m";
 
+/// Command line arguments for users to pass in.
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
@@ -34,6 +35,20 @@ struct Args {
     /// Values include TRACE, DEBUG, INFO, WARN, and ERROR.
     #[clap(short, long, default_value = "DEBUG")]
     logging_level: tracing::Level,
+
+    /// A specific subcommand (task) that should be focused on.
+    #[clap(subcommand)]
+    command: Option<Command>,
+}
+
+#[derive(Debug, Subcommand)]
+enum Command {
+    /// Takes a continuous input of video and use YOLO on the camera.
+    Stream {
+        /// Path to a video capture device (like a webcam).
+        #[clap(short, long)]
+        input: String,
+    },
 }
 
 fn main() -> anyhow::Result<()> {
