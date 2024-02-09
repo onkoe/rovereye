@@ -75,9 +75,11 @@ fn main() -> anyhow::Result<()> {
     )?;
 
     // feed it an example image
-    let mut frame = imread("images/flowers.png", 1)?;
+    let mut frame = imread(&input_file, 1)?;
+    draw_bounding_boxes(&mut model, &mut frame)?;
 
     let (bboxes, class_ids, confidences) = model.forward(&frame, 0.25, 0.4)?;
+    opencv::imgcodecs::imwrite(&output_file, &frame, &Vector::new())?;
 
     for (i, bbox) in bboxes.iter().enumerate() {
         // create bounding box
@@ -142,9 +144,5 @@ fn main() -> anyhow::Result<()> {
         );
         tracing::trace!("Bounding box: {:?}", bbox);
     }
-
-    // write the bounding boxes
-    opencv::imgcodecs::imwrite("images/flowers_yolov8_n.jpg", &frame, &Vector::new())?;
-
     Ok(())
 }
