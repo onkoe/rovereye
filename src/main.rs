@@ -1,4 +1,4 @@
-use std::{env::current_dir, path::Path, thread::sleep, time::Duration};
+use std::{env::current_dir, fs::create_dir, path::Path, thread::sleep, time::Duration};
 
 use anyhow::Context;
 use clap::{Parser, Subcommand};
@@ -11,10 +11,10 @@ use od_opencv::{
 use opencv::{
     core::Vector,
     dnn::{DNN_BACKEND_OPENCV, DNN_TARGET_CPU},
-    imgcodecs::imread,
+    imgcodecs::{imread, imwrite},
     videoio::{
-        VideoCaptureTrait, VideoCaptureTraitConst, CAP_ANY, CAP_PROP_FRAME_HEIGHT,
-        CAP_PROP_FRAME_WIDTH,
+        self, VideoCapture, VideoCaptureTrait, VideoCaptureTraitConst, CAP_ANY,
+        CAP_PROP_FRAME_HEIGHT, CAP_PROP_FRAME_WIDTH,
     },
 };
 
@@ -96,8 +96,8 @@ fn main() -> anyhow::Result<()> {
                 tracing::info!("Attempting to use capture device!");
 
                 let mut cam = opencv::videoio::VideoCapture::from_file(&input, CAP_ANY)?;
-                cam.set(CAP_PROP_FRAME_WIDTH, 640.0)?;
-                cam.set(CAP_PROP_FRAME_HEIGHT, 640.0)?;
+                cam.set(CAP_PROP_FRAME_WIDTH, net_size.0 as f64)?;
+                cam.set(CAP_PROP_FRAME_HEIGHT, net_size.1 as f64)?;
 
                 sleep(Duration::from_millis(500));
                 tracing::info!("Capture device found!");
@@ -127,6 +127,7 @@ fn main() -> anyhow::Result<()> {
 
     let input_file: String = args.input.to_owned();
     let input_filetype = file_format::FileFormat::from_file(Path::new(&args.input))?;
+    tracing::debug!("input_file: {input_file}");
 
     match input_filetype.kind() {
         Kind::Image => {
@@ -143,7 +144,45 @@ fn main() -> anyhow::Result<()> {
 
         Kind::Video => {
             tracing::debug!("Input {} was detected to be a video.", input_file);
-            // TODO for frame in input_file {}
+
+            let mut c = VideoCapture::from_file_def(&input_file)?;
+
+            if !c.is_opened()? {
+                tracing::error!("Capture: Couldn't open the given video file.");
+                anyhow::bail!("Given video file, {input_file}, may be damaged or malformed.");
+            }
+
+            // create output folder
+            let output_folder = format!("{0}/{output_filename}", args.output);
+            tracing::debug!("Kind::Video: writing video to output folder: `{output_folder}`");
+            let _ = create_dir(output_folder);
+
+            let mut v = Vec::new();
+            let mut i: u32 = 0;
+
+            // while we have frames, check if they're good and write them to the vec
+            while let Ok(true) = c.grab() {
+                let mut frame = opencv::core::Mat::default();
+
+                if let Ok(true) = c.retrieve(&mut frame, videoio::CAP_ANY) {
+                    tracing::debug!("frame {i}");
+                    bb::draw_bounding_boxes(&mut model, &mut frame)?;
+                    v.push(frame.clone());
+                    i += 1;
+                }
+            }
+
+            // let's do all the writing now!
+            for (i, frame) in v.iter().enumerate() {
+                imwrite(
+                    &format!(
+                        "{0}/{output_filename}/{output_filename}_{i}_{MODEL_NAME}.jpg",
+                        args.output
+                    ),
+                    frame,
+                    &opencv::core::Vector::<i32>::new(),
+                )?;
+            }
         }
 
         k => {
