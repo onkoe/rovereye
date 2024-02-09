@@ -59,3 +59,5 @@ There are numerous compatibility issues, so I suggest running a VM through Virtu
 When you download a model to train from, make sure you convert it to ONNX using [the incredible script](https://crates.io/crates/od_opencv#user-content-prerequisites) that the Rust guy made.
 
 Create a virtual environment and download the dependencies (`ultralytics` `onnx`). Then, you can convert it correctly!
+
+For additional instructions, see [training/README.md](training/README.md).

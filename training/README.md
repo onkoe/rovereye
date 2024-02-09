@@ -71,7 +71,7 @@ After you configure these options in the `train.py` file, navigate to its parent
 
 After you train the model, you'll need to export it into the ONNX format, which is OpenCV's preferred format.
 
-You only need to run `python3 export.py` to get this model.
+You only need to run `python3 export.py` to use this format.
 
 ### Running
 
