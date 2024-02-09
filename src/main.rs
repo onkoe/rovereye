@@ -65,7 +65,7 @@ fn main() -> anyhow::Result<()> {
 
     // create the model
     let mut model = ModelUltralyticsV8::new_from_file(
-        "pretrained/yolov8n.onnx",
+        "pretrained/last.onnx",
         Some(&conf),
         net_size,
         ModelFormat::ONNX,  // use onnx model
