@@ -1,20 +1,22 @@
-use std::{env::current_dir, path::Path};
+use std::{env::current_dir, path::Path, thread::sleep, time::Duration};
 
 use anyhow::Context;
 use clap::{Parser, Subcommand};
+use file_format::Kind;
 use od_opencv::{
     model_format::ModelFormat,
     model_ultralytics::ModelUltralyticsV8, // YOLOv8 by Ultralytics.
 };
 
 use opencv::{
-    core::{Mat, Rect_, Scalar, Vector},
+    core::Vector,
     dnn::{DNN_BACKEND_OPENCV, DNN_TARGET_CPU},
     imgcodecs::imread,
-    imgproc::LINE_4,
+    videoio::{VideoCaptureTraitConst, CAP_ANY},
 };
 
 mod bb;
+mod stream;
 
 // FIXME(note): our current model ONLY has the orange mallet in its training data lol
 const CLASSES_LABELS: [&str; 1] = ["orange mallet"];
@@ -64,18 +66,7 @@ fn main() -> anyhow::Result<()> {
         .compact()
         .with_max_level(args.logging_level)
         .finish();
-
     tracing::subscriber::set_global_default(subscriber)?;
-
-    // parse input + output files
-    let output_filename = Path::new(&args.input)
-        .file_stem()
-        .context("input files should have names")?
-        .to_str()
-        .context("input files should have valid UTF-8 characters")?;
-
-    let input_file: String = args.input.to_owned();
-    let output_file = format!("{0}/{output_filename}_{MODEL_NAME}.jpg", args.output);
 
     // FIXME: no clue why this is necessary
     let conf = current_dir()?.to_string_lossy().to_string() + "/config.ini";
@@ -92,14 +83,41 @@ fn main() -> anyhow::Result<()> {
         vec![], // no filtered 'classes' of objs
     )?;
 
-    // feed it an example image
-    let mut frame = imread(&input_file, 1)?;
-    draw_bounding_boxes(&mut model, &mut frame)?;
+    // handle streaming subcommand
+    if let Some(Command::Stream { input }) = args.command {
+        let path = Path::new(&input);
 
-    // write the bounding boxes
-    opencv::imgcodecs::imwrite(&output_file, &frame, &Vector::new())?;
-    Ok(())
-}
+        // check if given capture device exists
+        match path.exists() {
+            true => {
+                tracing::info!("Attempting to use capture device!");
+
+                let mut cam = opencv::videoio::VideoCapture::from_file(&input, CAP_ANY)?;
+                sleep(Duration::from_millis(500));
+                tracing::info!("Capture device found!");
+
+                if !cam.is_opened()? {
+                    tracing::error!("Unable to open given capture device!");
+                    anyhow::bail!("Failed to open capture device at: `{path:?}`");
+                }
+
+                // head to the stream module
+                stream::stream(&mut cam)?;
+                return Ok(());
+            }
+            false => {
+                tracing::error!("Unable to open given capture device!");
+                anyhow::bail!("Failed to open capture device at: `{path:?}`");
+            }
+        }
+    }
+
+    // parse input + output files
+    let output_filename = Path::new(&args.input)
+        .file_stem()
+        .context("input files should have names")?
+        .to_str()
+        .context("input files should have valid UTF-8 characters")?;
 
     let input_file: String = args.input.to_owned();
     let input_filetype = file_format::FileFormat::from_file(Path::new(&args.input))?;
