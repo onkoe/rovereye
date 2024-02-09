@@ -101,6 +101,32 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
+    let input_file: String = args.input.to_owned();
+    let input_filetype = file_format::FileFormat::from_file(Path::new(&args.input))?;
+
+    match input_filetype.kind() {
+        Kind::Image => {
+            tracing::debug!("Input {} was detected to be an image.", input_file);
+
+            // make frame and draw bounding boxes
+            let mut frame = imread(&input_file, 1)?;
+            bb::draw_bounding_boxes(&mut model, &mut frame)?;
+
+            // export drawn-on frame as output file
+            let output_file = format!("{0}/{output_filename}_{MODEL_NAME}.jpg", args.output);
+            opencv::imgcodecs::imwrite(&output_file, &frame, &Vector::new())?;
+        }
+
+        Kind::Video => {
+            tracing::debug!("Input {} was detected to be a video.", input_file);
+            // TODO for frame in input_file {}
+        }
+
+        k => {
+            tracing::error!("Unexpected filetype.");
+            anyhow::bail!("Files of type {:?} are not permitted for use in OpenCV.", k);
+        }
     }
+
     Ok(())
 }

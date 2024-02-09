@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.79"
 clap = { version = "3", features = ["derive"] }
+file-format = { version = "0.24.0", features = ["reader-mp4"] }
 od_opencv = "0.1.5"
 opencv = "0.88"
 tracing = "0.1.40"
