@@ -1,4 +1,4 @@
-use std::env::current_dir;
+use std::{env::current_dir, path::Path};
 
 use anyhow::Context;
 use clap::Parser;
@@ -60,8 +60,9 @@ fn main() -> anyhow::Result<()> {
     let input_file: String = args.input.to_owned();
     let output_file = format!("{0}/{output_filename}_{MODEL_NAME}.jpg", args.output);
 
-    // set expected img size (width x height)
-    let net_size = (640, 640);
+    // FIXME: no clue why this is necessary
+    let conf = current_dir()?.to_string_lossy().to_string() + "/config.ini";
+    let net_size = (640, 640); // model internal image size
 
     // create the model
     let mut model = ModelUltralyticsV8::new_from_file(
