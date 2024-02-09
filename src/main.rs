@@ -1,6 +1,7 @@
 use std::env::current_dir;
 
 use anyhow::Context;
+use clap::Parser;
 use od_opencv::{
     model_format::ModelFormat,
     model_ultralytics::ModelUltralyticsV8, // YOLOv8 by Ultralytics.
@@ -16,8 +17,28 @@ use tracing::Level;
 
 #[rustfmt::skip] // keep this monstrosity outta my eyes
 const CLASSES_LABELS: [&str; 80] = ["person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck", "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard", "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple", "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "sofa", "pottedplant", "bed", "diningtable", "toilet", "tvmonitor", "laptop", "mouse", "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"];
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+struct Args {
+    /// The input image to scan.
+    /// TODO: support video
+    #[clap(short, long, default_value = "images/flowers.png")]
+    input: String,
+
+    /// The output **location** of the generated file.
+    #[clap(short, long, default_value = "images/")]
+    output: String,
+
+    /// Logging level for the `tracing` crate.
+    /// Values include TRACE, DEBUG, INFO, WARN, and ERROR.
+    #[clap(short, long, default_value = "DEBUG")]
+    logging_level: tracing::Level,
+}
 
 fn main() -> anyhow::Result<()> {
+    // parse command line args
+    let args = Args::parse();
+
     // enable logging
     let subscriber = tracing_subscriber::fmt()
         .with_file(true)
