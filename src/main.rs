@@ -30,7 +30,6 @@ const MODEL_NAME: &str = "yolov8_m";
 #[clap(author, version, about, long_about = None)]
 struct Args {
     /// The input image to scan.
-    /// TODO: support video
     #[clap(short, long, default_value = "images/flowers.png")]
     input: String,
 
