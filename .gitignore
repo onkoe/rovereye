@@ -4,3 +4,20 @@
 **/*.onnx
 **/*.pt
 Cargo.lock
+
+# don't watch training data
+training/data/**
+!training/data/.gitkeep
+**/runs/**
+
+# avoid adding cargo config (required for my weird brew macos setup)
+.cargo/config.toml
+
+# blank config.toml
+config.toml
+
+# *sigh* macos
+.DS_Store
+
+# processed images
+images/**
