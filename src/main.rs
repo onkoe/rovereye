@@ -9,7 +9,7 @@ use od_opencv::{
 };
 use opencv::dnn::{DNN_BACKEND_OPENCV, DNN_TARGET_CPU};
 
-mod bb;
+mod bounding_box;
 mod image;
 mod stream;
 mod video;

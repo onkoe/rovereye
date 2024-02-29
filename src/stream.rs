@@ -2,7 +2,7 @@ use std::path::Path;
 use std::thread::sleep;
 use std::time::{Duration, Instant};
 
-use crate::bb;
+use crate::bounding_box;
 use od_opencv::model_ultralytics::ModelUltralyticsV8;
 use opencv::core::Mat;
 use opencv::highgui::{imshow, named_window, WINDOW_NORMAL};
@@ -32,7 +32,7 @@ pub fn stream(camera: &mut VideoCapture, model: &mut ModelUltralyticsV8) -> anyh
             named_window("SoRo Autonomous - YOLOv8 Stream Mode", WINDOW_NORMAL)?;
 
             // process frame
-            bb::draw_bounding_boxes(model, &mut frame)?;
+            bounding_box::draw_bounding_boxes(model, &mut frame)?;
 
             // display frame
             imshow("SoRo Autonomous - YOLOv8 Stream Mode", &frame)?;

@@ -1,6 +1,6 @@
 use std::fs::create_dir;
 
-use crate::{bb, MODEL_NAME};
+use crate::{bounding_box, MODEL_NAME};
 use od_opencv::model_ultralytics::ModelUltralyticsV8;
 use opencv::{
     imgcodecs::imwrite,
@@ -37,7 +37,7 @@ pub fn process_video(
 
         if let Ok(true) = c.retrieve(&mut frame, CAP_ANY) {
             tracing::debug!("frame {i}");
-            bb::draw_bounding_boxes(&mut model, &mut frame)?;
+            bounding_box::draw_bounding_boxes(&mut model, &mut frame)?;
             v.push(frame.clone());
             i += 1;
         }

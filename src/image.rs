@@ -1,4 +1,4 @@
-use crate::{bb, MODEL_NAME};
+use crate::{bounding_box, MODEL_NAME};
 use od_opencv::model_ultralytics::ModelUltralyticsV8;
 use opencv::{core::Vector, imgcodecs::imread};
 
@@ -13,7 +13,7 @@ pub fn process_image(
 
     // make frame and draw bounding boxes
     let mut frame = imread(&input_file, 1)?;
-    bb::draw_bounding_boxes(&mut model, &mut frame)?;
+    bounding_box::draw_bounding_boxes(&mut model, &mut frame)?;
 
     // export drawn-on frame as output file
     let output_file = format!("{0}/{output_filename}_{MODEL_NAME}.jpg", output_path);
