@@ -1,4 +1,4 @@
-use std::{env::current_dir, fs::create_dir, path::Path};
+use std::{env::current_dir, path::Path};
 
 use anyhow::Context;
 use clap::{Parser, Subcommand};
@@ -7,19 +7,16 @@ use od_opencv::{
     model_format::ModelFormat,
     model_ultralytics::ModelUltralyticsV8, // YOLOv8 by Ultralytics.
 };
-use opencv::{
-    core::Vector,
-    dnn::{DNN_BACKEND_OPENCV, DNN_TARGET_CPU},
-    imgcodecs::{imread, imwrite},
-    videoio::{self, VideoCapture, VideoCaptureTrait, VideoCaptureTraitConst},
-};
+use opencv::dnn::{DNN_BACKEND_OPENCV, DNN_TARGET_CPU};
 
 mod bb;
+mod image;
 mod stream;
+mod video;
 
 // FIXME(note): our current model ONLY has the orange mallet in its training data lol
-const CLASSES_LABELS: [&str; 1] = ["orange mallet"];
-const MODEL_NAME: &str = "yolov8_m";
+pub const CLASSES_LABELS: [&str; 1] = ["orange mallet"];
+pub const MODEL_NAME: &str = "yolov8_m";
 pub const NET_SIZE: (i32, i32) = (640, 640); // model internal image size
 
 /// Command line arguments for users to pass in.
@@ -75,19 +72,8 @@ fn main() -> anyhow::Result<()> {
         .finish();
     tracing::subscriber::set_global_default(subscriber)?;
 
-    // FIXME: no clue why this is necessary
-    let conf = current_dir()?.to_string_lossy().to_string() + "/config.ini";
-
     // create the model
-    let mut model = ModelUltralyticsV8::new_from_file(
-        &args.model,
-        Some(&conf),
-        NET_SIZE,
-        ModelFormat::ONNX, // use onnx model
-        DNN_BACKEND_OPENCV,
-        DNN_TARGET_CPU, // <---- target cpu
-        vec![],
-    )?;
+    let mut model = create_model(&args.model)?;
 
     // handle streaming subcommand... if necessary
     if let Some(Command::Stream { input, device }) = args.command {
@@ -107,66 +93,29 @@ fn main() -> anyhow::Result<()> {
     tracing::debug!("input_file: {input_file}");
 
     match input_filetype.kind() {
-        Kind::Image => {
-            tracing::debug!("Input {} was detected to be an image.", input_file);
-
-            // make frame and draw bounding boxes
-            let mut frame = imread(&input_file, 1)?;
-            bb::draw_bounding_boxes(&mut model, &mut frame)?;
-
-            // export drawn-on frame as output file
-            let output_file = format!("{0}/{output_filename}_{MODEL_NAME}.jpg", args.output);
-            opencv::imgcodecs::imwrite(&output_file, &frame, &Vector::new())?;
-        }
-
-        Kind::Video => {
-            tracing::debug!("Input {} was detected to be a video.", input_file);
-
-            let mut c = VideoCapture::from_file_def(&input_file)?;
-
-            if !c.is_opened()? {
-                tracing::error!("Capture: Couldn't open the given video file.");
-                anyhow::bail!("Given video file, {input_file}, may be damaged or malformed.");
-            }
-
-            // create output folder
-            let output_folder = format!("{0}/{output_filename}", args.output);
-            tracing::debug!("Kind::Video: writing video to output folder: `{output_folder}`");
-            let _ = create_dir(output_folder);
-
-            let mut v = Vec::new();
-            let mut i: u32 = 0;
-
-            // while we have frames, check if they're good and write them to the vec
-            while let Ok(true) = c.grab() {
-                let mut frame = opencv::core::Mat::default();
-
-                if let Ok(true) = c.retrieve(&mut frame, videoio::CAP_ANY) {
-                    tracing::debug!("frame {i}");
-                    bb::draw_bounding_boxes(&mut model, &mut frame)?;
-                    v.push(frame.clone());
-                    i += 1;
-                }
-            }
-
-            // let's do all the writing now!
-            for (i, frame) in v.iter().enumerate() {
-                imwrite(
-                    &format!(
-                        "{0}/{output_filename}/{output_filename}_{i}_{MODEL_NAME}.jpg",
-                        args.output
-                    ),
-                    frame,
-                    &opencv::core::Vector::<i32>::new(),
-                )?;
-            }
-        }
-
-        k => {
+        Kind::Image => image::process_image(input_file, output_filename, args.output, model)?,
+        Kind::Video => video::process_video(input_file, output_filename, args.output, model)?,
+        x => {
             tracing::error!("Unexpected filetype.");
-            anyhow::bail!("Files of type {:?} are not permitted for use in OpenCV.", k);
+            anyhow::bail!("Files of type {:?} are not permitted for use in OpenCV.", x);
         }
     }
 
     Ok(())
+}
+
+/// Given a path to a pre-trained model, attempts to initalize a model object.
+pub fn create_model(model_path: &str) -> anyhow::Result<ModelUltralyticsV8> {
+    // FIXME: no clue why this is necessary
+    let conf = current_dir()?.to_string_lossy().to_string() + "/config.ini";
+
+    Ok(ModelUltralyticsV8::new_from_file(
+        model_path,
+        Some(&conf),
+        NET_SIZE,
+        ModelFormat::ONNX, // use onnx model
+        DNN_BACKEND_OPENCV,
+        DNN_TARGET_CPU, // <---- target cpu
+        vec![],
+    )?)
 }
