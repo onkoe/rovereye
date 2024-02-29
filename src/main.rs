@@ -14,7 +14,6 @@ mod image;
 mod stream;
 mod video;
 
-// FIXME(note): our current model ONLY has the orange mallet in its training data lol
 pub const CLASSES_LABELS: [&str; 1] = ["orange mallet"];
 pub const MODEL_NAME: &str = "yolov8_m";
 pub const NET_SIZE: (i32, i32) = (640, 640); // model internal image size
