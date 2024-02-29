@@ -1,4 +1,4 @@
-use std::{env::current_dir, fs::create_dir, path::Path, thread::sleep, time::Duration};
+use std::{env::current_dir, fs::create_dir, path::Path};
 
 use anyhow::Context;
 use clap::{Parser, Subcommand};
@@ -7,15 +7,11 @@ use od_opencv::{
     model_format::ModelFormat,
     model_ultralytics::ModelUltralyticsV8, // YOLOv8 by Ultralytics.
 };
-
 use opencv::{
     core::Vector,
     dnn::{DNN_BACKEND_OPENCV, DNN_TARGET_CPU},
     imgcodecs::{imread, imwrite},
-    videoio::{
-        self, VideoCapture, VideoCaptureTrait, VideoCaptureTraitConst, CAP_ANY,
-        CAP_PROP_FRAME_HEIGHT, CAP_PROP_FRAME_WIDTH,
-    },
+    videoio::{self, VideoCapture, VideoCaptureTrait, VideoCaptureTraitConst},
 };
 
 mod bb;
@@ -24,6 +20,7 @@ mod stream;
 // FIXME(note): our current model ONLY has the orange mallet in its training data lol
 const CLASSES_LABELS: [&str; 1] = ["orange mallet"];
 const MODEL_NAME: &str = "yolov8_m";
+pub const NET_SIZE: (i32, i32) = (640, 640); // model internal image size
 
 /// Command line arguments for users to pass in.
 #[derive(Parser, Debug)]
@@ -57,7 +54,11 @@ enum Command {
     Stream {
         /// Path to a video capture device (like a webcam).
         #[clap(short, long)]
-        input: String,
+        input: Option<String>,
+        /// Video capture device number (used for Windows and macOS).
+        /// If no device is specified, uses `input` instead.
+        #[clap(short, long)]
+        device: Option<i32>,
     },
 }
 
@@ -76,50 +77,22 @@ fn main() -> anyhow::Result<()> {
 
     // FIXME: no clue why this is necessary
     let conf = current_dir()?.to_string_lossy().to_string() + "/config.ini";
-    let net_size = (640, 640); // model internal image size
 
     // create the model
     let mut model = ModelUltralyticsV8::new_from_file(
-        "pretrained/last.onnx",
         &args.model,
         Some(&conf),
-        net_size,
-        ModelFormat::ONNX,  // use onnx model
-        DNN_BACKEND_OPENCV, // <---- target cpu
-        DNN_TARGET_CPU,
-        vec![], // no filtered 'classes' of objs
+        NET_SIZE,
+        ModelFormat::ONNX, // use onnx model
+        DNN_BACKEND_OPENCV,
+        DNN_TARGET_CPU, // <---- target cpu
+        vec![],
     )?;
 
-    // handle streaming subcommand
-    if let Some(Command::Stream { input }) = args.command {
-        let path = Path::new(&input);
-
-        // check if given capture device exists
-        match path.exists() {
-            true => {
-                tracing::info!("Attempting to use capture device!");
-
-                let mut cam = opencv::videoio::VideoCapture::from_file(&input, CAP_ANY)?;
-                cam.set(CAP_PROP_FRAME_WIDTH, net_size.0 as f64)?;
-                cam.set(CAP_PROP_FRAME_HEIGHT, net_size.1 as f64)?;
-
-                sleep(Duration::from_millis(500));
-                tracing::info!("Capture device found!");
-
-                if !cam.is_opened()? {
-                    tracing::error!("Unable to open given capture device!");
-                    anyhow::bail!("Failed to open capture device at: `{path:?}`");
-                }
-
-                // head to the stream module
-                stream::stream(&mut cam, &mut model)?;
-                return Ok(());
-            }
-            false => {
-                tracing::error!("Unable to open given capture device!");
-                anyhow::bail!("Failed to open capture device at: `{path:?}`");
-            }
-        }
+    // handle streaming subcommand... if necessary
+    if let Some(Command::Stream { input, device }) = args.command {
+        let mut cam = stream::create_capture_device_from_args(input, device)?;
+        stream::stream(&mut cam, &mut model)?;
     }
 
     // parse input + output files
