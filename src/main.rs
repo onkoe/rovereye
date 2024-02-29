@@ -7,7 +7,7 @@ use od_opencv::{
     model_format::ModelFormat,
     model_ultralytics::ModelUltralyticsV8, // YOLOv8 by Ultralytics.
 };
-use opencv::dnn::{DNN_BACKEND_OPENCV, DNN_TARGET_CPU};
+use opencv::dnn::{DNN_BACKEND_CUDA, DNN_BACKEND_OPENCV, DNN_TARGET_CPU, DNN_TARGET_CUDA};
 
 mod bounding_box;
 mod image;
@@ -42,6 +42,10 @@ struct Args {
     /// A specific subcommand (task) that should be focused on.
     #[clap(subcommand)]
     command: Option<Command>,
+
+    /// Toggles CUDA support.
+    #[clap(short, long, action)]
+    cuda: bool,
 }
 
 #[derive(Debug, Subcommand)]
@@ -72,7 +76,7 @@ fn main() -> anyhow::Result<()> {
     tracing::subscriber::set_global_default(subscriber)?;
 
     // create the model
-    let mut model = create_model(&args.model)?;
+    let mut model = create_model(&args.model, args.cuda)?;
 
     // handle streaming subcommand... if necessary
     if let Some(Command::Stream { input, device }) = args.command {
@@ -104,17 +108,25 @@ fn main() -> anyhow::Result<()> {
 }
 
 /// Given a path to a pre-trained model, attempts to initalize a model object.
-pub fn create_model(model_path: &str) -> anyhow::Result<ModelUltralyticsV8> {
+pub fn create_model(model_path: &str, cuda_support: bool) -> anyhow::Result<ModelUltralyticsV8> {
     // FIXME: no clue why this is necessary
     let conf = current_dir()?.to_string_lossy().to_string() + "/config.ini";
+
+    // check for CUDA flag. CPU is the default
+    let (backend, target) = if cuda_support {
+        tracing::info!("CUDA usage requested. Using CUDA backend.");
+        (DNN_BACKEND_CUDA, DNN_TARGET_CUDA)
+    } else {
+        (DNN_BACKEND_OPENCV, DNN_TARGET_CPU)
+    };
 
     Ok(ModelUltralyticsV8::new_from_file(
         model_path,
         Some(&conf),
         NET_SIZE,
         ModelFormat::ONNX, // use onnx model
-        DNN_BACKEND_OPENCV,
-        DNN_TARGET_CPU, // <---- target cpu
+        backend,
+        target,
         vec![],
     )?)
 }
