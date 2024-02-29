@@ -33,7 +33,7 @@ struct Args {
     #[clap(short, long, default_value = "images/flowers.png")]
     input: String,
 
-    /// The output **location** of the generated file.
+    /// The output location of the generated file.
     #[clap(short, long, default_value = "images/")]
     output: String,
 
@@ -41,6 +41,10 @@ struct Args {
     /// Values include TRACE, DEBUG, INFO, WARN, and ERROR.
     #[clap(short, long, default_value = "DEBUG")]
     logging_level: tracing::Level,
+
+    /// The pretrained model to use during detection.
+    #[clap(short, long, default_value = "pretrained/best.pt")]
+    model: String,
 
     /// A specific subcommand (task) that should be focused on.
     #[clap(subcommand)]
@@ -77,6 +81,7 @@ fn main() -> anyhow::Result<()> {
     // create the model
     let mut model = ModelUltralyticsV8::new_from_file(
         "pretrained/last.onnx",
+        &args.model,
         Some(&conf),
         net_size,
         ModelFormat::ONNX,  // use onnx model
