@@ -36,7 +36,7 @@ struct Args {
     logging_level: tracing::Level,
 
     /// The pretrained model to use during detection.
-    #[clap(short, long, default_value = "pretrained/best.pt")]
+    #[clap(short, long, default_value = "pretrained/best.onnx")]
     model: String,
 
     /// A specific subcommand (task) that should be focused on.
