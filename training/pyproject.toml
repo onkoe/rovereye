@@ -7,6 +7,8 @@ dependencies = [
     "onnx>=1.15.0",
     "opencv-python>=4.9.0.80",
     "ultralytics>=8.1.10",
+    "albumentations>=1.4.4",
+    "datumaro>=1.6.1"
 ]
 readme = "README.md"
 requires-python = ">= 3.8"
