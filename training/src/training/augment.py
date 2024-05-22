@@ -1,10 +1,12 @@
 from typing import List
+
 import albumentations
-import datumaro
 import cv2
+import datumaro
+from loguru import logger
 
 # load all the bounding boxes
-boxes: List[List[float]] = []
+data = datumaro.Dataset.import_from(path="data/export_dataset_feb_28_2024/data.yaml")
 
 # create the list of augmentations to perform
 transform = albumentations.Compose(
@@ -28,5 +30,26 @@ transform = albumentations.Compose(
             p=0.5,
         ),
     ],
-    bbox_params=albumentations.BboxParams(format="yolo"),
+    bbox_params=albumentations.BboxParams(format="coco"),
 )
+
+for image in data:
+    logger.info(f"Processing image {image.attributes.get('path')}")
+    
+    # load from disk
+    loaded_image = cv2.imread(image.attributes.get("path"))
+    loaded_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    # apply the augmentations
+    augmented = transform(image=image, bboxes=image.annotations)
+    augmented_image = augmented["image"]
+    augmented_bboxes = augmented["bboxes"]
+
+    # save the augmented image
+    cv2.imwrite("augmented_aug.jpg", augmented)
+    
+    # push the bounding boxes to the dataset
+    data.put(augmented_bboxes)
+    
+# write augmented dataset to disk
+data.export("augmented_dataset.yaml", format="coco")
