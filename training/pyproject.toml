@@ -8,7 +8,8 @@ dependencies = [
     "opencv-python>=4.9.0.80",
     "ultralytics>=8.1.10",
     "albumentations>=1.4.4",
-    "datumaro>=1.6.1"
+    "datumaro>=1.6.1",
+    "loguru>=0.7.2",
 ]
 readme = "README.md"
 requires-python = ">= 3.8"
