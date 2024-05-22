@@ -29,7 +29,7 @@ pub struct Model {
 
 impl Model {
     /// Creates a new model given a camera path (like /dev/video0) and a model
-    /// locationcarg (like ~/Downloads/my_model.onnx).
+    /// location (like ~/Downloads/my_model.onnx).
     pub fn new_from_camera_path(camera_path: &str, model_path: &str) -> Result<Model, ModelError> {
         let model = Self::create_yolo_instance(model_path)?;
         let camera = {

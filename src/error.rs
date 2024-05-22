@@ -14,18 +14,7 @@ pub enum ModelError {
 
 impl From<ModelError> for pyo3::PyErr {
     fn from(err: ModelError) -> Self {
-        match err {
-            ModelError::NoCaptureDevicePath(path) => Self::new::<PyString, _>(format!(
-                "The given capture device (camera) path doesn't exist: `{}`",
-                path
-            )),
-            ModelError::NoCaptureDeviceNumber(number) => Self::new::<PyString, _>(format!(
-                "The specified OpenCV capture device number has no assigned camera: `{}`",
-                number
-            )),
-            ModelError::ModelPathDoesntExist(path) => {
-                Self::new::<PyString, _>(format!("The given model path doesn't exist: `{}`", path))
-            }
-        }
+        let s = err.to_string();
+        Self::new::<PyString, _>(s)
     }
 }
