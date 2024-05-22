@@ -9,7 +9,7 @@ use od_opencv::{model_format::ModelFormat, model_ultralytics::ModelUltralyticsV8
 use opencv::{
     core::{Mat, MatTraitConst as _, Rect_},
     dnn::{DNN_BACKEND_CUDA, DNN_TARGET_CUDA},
-    videoio::VideoCapture,
+    videoio::{VideoCapture, VideoCaptureTrait as _, CAP_ANY},
 };
 
 pub const CLASSES_LABELS: [&str; 2] = ["orange mallet", "water bottle"];
@@ -59,9 +59,43 @@ impl Model {
         Ok(Self { model, camera })
     }
 
-    /// Captures a new image from the camera, then looks for
-    pub fn scan(&self) -> Option<Vec<(ItemType, CornerList)>> {
-        todo!()
+    /// Captures a new image from the camera, then looks for the items. Use
+    ///  this sparingly - each call creates a new image and creates bounding boxes.
+    pub fn scan(&mut self) -> Option<(Vec<CornerList>, Vec<ItemType>, Vec<f32>)> {
+        let mut frame = Mat::default();
+
+        if let Ok(true) = self.camera.grab() {
+            if let Ok(true) = self.camera.retrieve(&mut frame, CAP_ANY) {
+                if frame.size().ok()?.empty() {
+                    tracing::debug!("no image was captured!");
+                    return None;
+                }
+
+                let (bboxes, class_ids, confidences) =
+                    self.model.forward(&frame, 0.25, 0.4).ok()?;
+
+                let types = class_ids
+                    .iter()
+                    .filter_map(|&v| match v {
+                        0 => Some(ItemType::OrangeMallet),
+                        1 => Some(ItemType::WaterBottle),
+                        _ => {
+                            tracing::error!("Detected an unknown item.");
+                            None
+                        }
+                    })
+                    .collect::<Vec<_>>();
+
+                let bounding_boxes = bboxes
+                    .iter()
+                    .map(|&b| b.into())
+                    .collect::<Vec<CornerList>>();
+
+                return Some((bounding_boxes, types, confidences));
+            }
+        }
+
+        None
     }
 
     /// Creates a new instance of the YOLO model for internal use.
@@ -105,7 +139,7 @@ impl Model {
     }
 
     #[pyo3(name = "scan")]
-    pub fn py_scan(&self) -> Option<Vec<(ItemType, CornerList)>> {
+    pub fn py_scan(&mut self) -> Option<(Vec<CornerList>, Vec<ItemType>, Vec<f32>)> {
         self.scan()
     }
 }
