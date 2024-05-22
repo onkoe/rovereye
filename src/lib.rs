@@ -3,7 +3,7 @@
 //! A way to find the items requested by the 2024 URC, including the orange
 //! mallet and the water bottles.
 
-use std::env::current_dir;
+use std::{env::current_dir, path::Path};
 
 use od_opencv::{model_format::ModelFormat, model_ultralytics::ModelUltralyticsV8};
 use opencv::{
@@ -25,9 +25,19 @@ impl Model {
     /// Creates a new model given a camera path (like /dev/video0) and a model
     /// locationcarg (like ~/Downloads/my_model.onnx).
     pub fn new_from_camera_path(camera_path: &str, model_path: &str) -> Result<Model, ModelError> {
-        let _model = Self::create_yolo_instance(model_path)?;
+        let model = Self::create_yolo_instance(model_path)?;
+        let camera = {
+            let path = Path::new(camera_path);
+            let err = ModelError::NoCaptureDevicePath(camera_path.to_owned());
 
-        todo!()
+            if path.exists() {
+                VideoCapture::from_file_def(camera_path).map_err(|_| err)?
+            } else {
+                return Err(err);
+            }
+        };
+
+        Ok(Self { model, camera })
     }
 
     /// Given an OpenCV camera ID and model location, creates a new model
