@@ -60,7 +60,7 @@ impl Model {
     }
 
     /// Captures a new image from the camera, then looks for the items. Use
-    ///  this sparingly - each call creates a new image and creates bounding boxes.
+    /// this sparingly - each call grabs a new image and creates bounding boxes.
     pub fn scan(&mut self) -> Option<(Vec<CornerList>, Vec<ItemType>, Vec<f32>)> {
         let mut frame = Mat::default();
 
