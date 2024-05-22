@@ -16,6 +16,10 @@ pub const CLASSES_LABELS: [&str; 2] = ["orange mallet", "water bottle"];
 pub const MODEL_NAME: &str = "yolov8_m";
 pub const NET_SIZE: (i32, i32) = (640, 640); // model internal image size
 
+use error::ModelError;
+use pyo3::{PyErr, PyResult};
+
+mod error;
 pub struct Model {
     model: ModelUltralyticsV8,
     camera: VideoCapture,
@@ -82,15 +86,6 @@ impl Model {
     }
 }
 
-/// An error that can occur when creating a new model.
-#[derive(Clone, Debug, PartialEq, PartialOrd, Hash, Error)]
-pub enum ModelError {
-    #[error("The given capture device (camera) path doesn't exist: `{0}`")]
-    NoCaptureDevicePath(String),
-    #[error("The specified OpenCV capture device number has no assigned camera: `{0}`")]
-    NoCaptureDeviceNumber(i32),
-    #[error("The given model path doesn't exist: `{0}`")]
-    ModelPathDoesntExist(String),
 }
 
 /// The type of item found by the model.
