@@ -10,7 +10,6 @@ use opencv::{
     dnn::{DNN_BACKEND_CUDA, DNN_TARGET_CUDA},
     videoio::VideoCapture,
 };
-use thiserror::Error;
 
 pub const CLASSES_LABELS: [&str; 2] = ["orange mallet", "water bottle"];
 pub const MODEL_NAME: &str = "yolov8_m";
@@ -20,6 +19,8 @@ use error::ModelError;
 use pyo3::{PyErr, PyResult};
 
 mod error;
+
+#[pyo3::pyclass]
 pub struct Model {
     model: ModelUltralyticsV8,
     camera: VideoCapture,
@@ -58,7 +59,7 @@ impl Model {
     }
 
     /// Captures a new image from the camera, then looks for
-    pub fn scan(&self) -> Vec<(ItemType, CornerList)> {
+    pub fn scan(&self) -> Option<Vec<(ItemType, CornerList)>> {
         todo!()
     }
 
@@ -86,6 +87,26 @@ impl Model {
     }
 }
 
+#[pyo3::pymethods]
+impl Model {
+    #[pyo3(name = "new_from_camera_path")]
+    pub fn py_new_from_camera_path(&self, camera_path: &str, model_path: &str) -> PyResult<Self> {
+        Self::new_from_camera_path(camera_path, model_path).map_err(PyErr::from)
+    }
+
+    #[pyo3(name = "new_from_camera_number")]
+    pub fn py_new_from_camera_number(
+        &self,
+        camera_number: i32,
+        model_path: &str,
+    ) -> PyResult<Self> {
+        Self::new_from_camera_number(camera_number, model_path).map_err(PyErr::from)
+    }
+
+    #[pyo3(name = "scan")]
+    pub fn py_scan(&self) -> Option<Vec<(ItemType, CornerList)>> {
+        self.scan()
+    }
 }
 
 /// The type of item found by the model.
@@ -98,6 +119,7 @@ pub enum ItemType {
 
 /// The location of an object on an image, in pixels.
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Hash)]
+#[pyo3::pyclass]
 pub struct Coordinate {
     x: u64,
     y: u64,
@@ -118,6 +140,7 @@ impl Coordinate {
 /// A list of corners found on any object within an image.
 /// This creates a bounding box.
 #[derive(Clone, Debug, PartialEq, PartialOrd, Hash)]
+#[pyo3::pyclass]
 pub struct CornerList {
     top_left: Coordinate,
     bottom_left: Coordinate,
@@ -125,6 +148,7 @@ pub struct CornerList {
     bottom_right: Coordinate,
 }
 
+#[pyo3::pymethods]
 impl CornerList {
     /// Returns the top-left corner of the bounding box.
     fn top_left(&self) -> Coordinate {
