@@ -43,10 +43,14 @@ impl Model {
     /// Given an OpenCV camera ID and model location, creates a new model
     /// instance.
     pub fn new_from_camera_number(
-        camera_number: u8,
+        camera_number: i32,
         model_path: &str,
     ) -> Result<Model, ModelError> {
-        todo!()
+        let model = Self::create_yolo_instance(model_path)?;
+        let camera = VideoCapture::new_def(camera_number)
+            .map_err(|_| ModelError::NoCaptureDeviceNumber(camera_number))?;
+
+        Ok(Self { model, camera })
     }
 
     /// Captures a new image from the camera, then looks for
@@ -84,7 +88,7 @@ pub enum ModelError {
     #[error("The given capture device (camera) path doesn't exist: `{0}`")]
     NoCaptureDevicePath(String),
     #[error("The specified OpenCV capture device number has no assigned camera: `{0}`")]
-    NoCaptureDeviceNumber(u16),
+    NoCaptureDeviceNumber(i32),
     #[error("The given model path doesn't exist: `{0}`")]
     ModelPathDoesntExist(String),
 }
