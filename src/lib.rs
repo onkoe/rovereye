@@ -7,6 +7,7 @@ use std::{env::current_dir, path::Path};
 
 use od_opencv::{model_format::ModelFormat, model_ultralytics::ModelUltralyticsV8};
 use opencv::{
+    core::{Mat, MatTraitConst as _, Rect_},
     dnn::{DNN_BACKEND_CUDA, DNN_TARGET_CUDA},
     videoio::VideoCapture,
 };
@@ -121,18 +122,23 @@ pub enum ItemType {
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Hash)]
 #[pyo3::pyclass]
 pub struct Coordinate {
-    x: u64,
-    y: u64,
+    x: i32,
+    y: i32,
 }
 
 impl Coordinate {
+    /// Creates a new coordinate.
+    pub fn new(x: i32, y: i32) -> Self {
+        Self { x, y }
+    }
+
     /// Returns the `x` value of the coordinate.
-    pub fn x(&self) -> u64 {
+    pub fn x(&self) -> i32 {
         self.x
     }
 
     /// Returns the `y` value of the coordinate.
-    pub fn y(&self) -> u64 {
+    pub fn y(&self) -> i32 {
         self.y
     }
 }
@@ -168,5 +174,16 @@ impl CornerList {
     /// Returns the bottom-right corner of the bounding box.
     fn bottom_right(&self) -> Coordinate {
         self.bottom_right
+    }
+}
+
+impl From<Rect_<i32>> for CornerList {
+    fn from(value: Rect_<i32>) -> Self {
+        Self {
+            top_left: Coordinate::new(value.x, value.y),
+            top_right: Coordinate::new(value.x + value.width, value.y),
+            bottom_left: Coordinate::new(value.x, value.y + value.height),
+            bottom_right: Coordinate::new(value.x + value.width, value.y + value.height),
+        }
     }
 }
